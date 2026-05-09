@@ -8,6 +8,8 @@
   --muted: #6b7280;
   --gain: #047857;
   --gain-bg: #ecfdf5;
+  --loss: #b91c1c;
+  --loss-bg: #fef2f2;
   --accent: #0f1729;
 }
 
@@ -19,6 +21,8 @@
   --color-muted: var(--muted);
   --color-gain: var(--gain);
   --color-gain-bg: var(--gain-bg);
+  --color-loss: var(--loss);
+  --color-loss-bg: var(--loss-bg);
   --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -33,6 +37,8 @@
     --muted: #9aa3b8;
     --gain: #34d399;
     --gain-bg: #052e23;
+    --loss: #f87171;
+    --loss-bg: #2a0d10;
     --accent: #f4f6fb;
   }
 }
