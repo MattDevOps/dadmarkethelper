@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MoversPayload } from "./api/movers/route";
 import type { Mover } from "@/lib/webull";
 
-const REFRESH_MS = 30_000;
+const REFRESH_MS = 300_000;
 
 type SortDir = "desc" | "asc";
 
@@ -29,6 +29,12 @@ function formatClock(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function MoversView({ initial }: { initial: MoversPayload }) {
@@ -89,7 +95,7 @@ export default function MoversView({ initial }: { initial: MoversPayload }) {
               type="button"
               onClick={refresh}
               disabled={refreshing}
-              className="rounded-full border border-[var(--card-border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--muted)] transition active:scale-95 disabled:opacity-60"
+              className="rounded-full border border-[var(--card-border)] bg-[var(--card)] px-4 py-2 text-base font-medium text-[var(--muted)] transition active:scale-95 disabled:opacity-60"
               aria-label="Refresh"
             >
               {refreshing ? "Refreshing…" : "Refresh"}
@@ -98,7 +104,7 @@ export default function MoversView({ initial }: { initial: MoversPayload }) {
         </div>
         <p className="mt-1 text-sm text-[var(--muted)] sm:text-base">{session.sublabel}</p>
         <p className="mt-1 text-xs text-[var(--muted)]">
-          Movers above 4% • $5+ stocks • updated {formatClock(dataAsOf ?? fetchedAt)}
+          Movers above 4% • $5+ stocks • updated {formatDate(dataAsOf ?? fetchedAt)} {formatClock(dataAsOf ?? fetchedAt)}
         </p>
         {errorVisible && (
           <p className="mt-3 rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-900/30 dark:text-amber-200">
@@ -113,7 +119,7 @@ export default function MoversView({ initial }: { initial: MoversPayload }) {
       </div>
 
       <footer className="mt-10 text-center text-xs text-[var(--muted)]">
-        Auto-refresh every 30s • Data from Webull
+        Auto-refresh every 5m • Data from Webull
       </footer>
     </main>
   );
