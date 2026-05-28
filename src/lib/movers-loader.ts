@@ -10,7 +10,7 @@ export type MoversPayload = {
   error?: string;
 };
 
-const FILTERS = { minPrice: 5, minPct: 4, limit: 25 };
+const FILTERS = { minPrice: 35, minPct: 4, limit: 25 };
 
 export async function loadMoversPayload(): Promise<MoversPayload> {
   const session = currentSession();

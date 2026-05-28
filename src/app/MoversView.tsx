@@ -104,7 +104,7 @@ export default function MoversView({ initial }: { initial: MoversPayload }) {
         </div>
         <p className="mt-1 text-sm text-[var(--muted)] sm:text-base">{session.sublabel}</p>
         <p className="mt-1 text-xs text-[var(--muted)]">
-          Movers above 4% • $5+ stocks • updated {formatDate(dataAsOf ?? fetchedAt)} {formatClock(dataAsOf ?? fetchedAt)}
+          Movers above 4% • $35+ stocks • updated {formatDate(dataAsOf ?? fetchedAt)} {formatClock(dataAsOf ?? fetchedAt)}
         </p>
         {errorVisible && (
           <p className="mt-3 rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-900/30 dark:text-amber-200">
