@@ -46,6 +46,24 @@ type WebullBriefResponse = {
   };
 };
 
+// Real-time quote row from the batch realtime endpoint. During extended hours
+// (pre/post market) `pPrice`/`pChRatio`/`pChange` carry the live extended-hours
+// quote relative to the regular-session close.
+type WebullRealtimeQuote = {
+  tickerId: number;
+  close?: string;
+  pPrice?: string;
+  pChRatio?: string;
+  pChange?: string;
+};
+
+export type LiveQuote = {
+  price: number; // extended-hours price (pPrice), falling back to regular close
+  changePct: number; // extended-hours move vs regular close, in percent
+  changeAbs: number;
+  prevClose: number; // regular-session close
+};
+
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
@@ -97,6 +115,79 @@ export function rowsToMovers(
       changeAbs,
       prevClose,
       volume,
+    });
+  }
+  movers.sort((a, b) => (side === "gainers" ? b.changePct - a.changePct : a.changePct - b.changePct));
+  return movers.slice(0, opts.limit);
+}
+
+// Fetch live extended-hours quotes for the given tickers. The ranking endpoint's
+// `values` block is a stale snapshot during pre/post market, so we re-quote here.
+export async function fetchExtendedQuotes(tickerIds: number[]): Promise<Map<number, LiveQuote>> {
+  const out = new Map<number, LiveQuote>();
+  const CHUNK = 50;
+  const chunks: number[][] = [];
+  for (let i = 0; i < tickerIds.length; i += CHUNK) {
+    chunks.push(tickerIds.slice(i, i + CHUNK));
+  }
+  const results = await Promise.all(
+    chunks.map(async (chunk) => {
+      const url = `https://quotes-gw.webullfintech.com/api/bgw/quote/realtime?ids=${chunk.join(",")}&includeSecu=1&delay=0&more=1`;
+      try {
+        const res = await fetch(url, {
+          headers: { "User-Agent": UA, Accept: "application/json" },
+          cache: "no-store",
+        });
+        if (!res.ok) return [] as WebullRealtimeQuote[];
+        return (await res.json()) as WebullRealtimeQuote[];
+      } catch {
+        return [] as WebullRealtimeQuote[];
+      }
+    }),
+  );
+  for (const rows of results) {
+    for (const q of rows ?? []) {
+      const close = parseFloatOr(q.close);
+      out.set(q.tickerId, {
+        price: parseFloatOr(q.pPrice, close),
+        changePct: parseFloatOr(q.pChRatio) * 100,
+        changeAbs: parseFloatOr(q.pChange),
+        prevClose: close,
+      });
+    }
+  }
+  return out;
+}
+
+// Build movers from ranking rows using live extended-hours quotes instead of the
+// stale ranking `values`. Direction (gainer/loser) is decided by the live move,
+// so a name that the stale ranking misclassifies lands on the correct side.
+export function rowsToExtendedMovers(
+  rows: WebullRow[],
+  quotes: Map<number, LiveQuote>,
+  side: Side,
+  opts: { minPrice: number; minPct: number; limit: number },
+): Mover[] {
+  const movers: Mover[] = [];
+  const seen = new Set<number>();
+  for (const r of rows) {
+    const t = r.ticker;
+    if (seen.has(t.tickerId)) continue;
+    const q = quotes.get(t.tickerId);
+    if (!q) continue;
+    seen.add(t.tickerId);
+    if (q.price < opts.minPrice) continue;
+    if (side === "gainers" ? q.changePct < opts.minPct : q.changePct > -opts.minPct) continue;
+    movers.push({
+      tickerId: t.tickerId,
+      symbol: t.symbol,
+      name: t.name,
+      exchange: t.disExchangeCode ?? t.exchangeCode ?? "",
+      price: q.price,
+      changePct: q.changePct,
+      changeAbs: q.changeAbs,
+      prevClose: q.prevClose,
+      volume: parseFloatOr(t.volume),
     });
   }
   movers.sort((a, b) => (side === "gainers" ? b.changePct - a.changePct : a.changePct - b.changePct));

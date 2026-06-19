@@ -104,7 +104,7 @@ export default function MoversView({ initial }: { initial: MoversPayload }) {
         </div>
         <p className="mt-1 text-sm text-[var(--muted)] sm:text-base">{session.sublabel}</p>
         <p className="mt-1 text-xs text-[var(--muted)]">
-          Movers above 4% • $35+ stocks • updated {formatDate(dataAsOf ?? fetchedAt)} {formatClock(dataAsOf ?? fetchedAt)}
+          {session.session === "pre" || session.session === "after" ? "Top movers" : "Movers above 4%"} • $35+ stocks • updated {formatDate(dataAsOf ?? fetchedAt)} {formatClock(dataAsOf ?? fetchedAt)}
         </p>
         {errorVisible && (
           <p className="mt-3 rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-900/30 dark:text-amber-200">
@@ -208,7 +208,7 @@ function EmptyState({ tone }: { tone: "gain" | "loss" }) {
   const word = tone === "gain" ? "gainers" : "losers";
   return (
     <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card)] px-6 py-10 text-center">
-      <p className="text-sm font-medium">No {word} above 4% right now.</p>
+      <p className="text-sm font-medium">No {word} right now.</p>
     </div>
   );
 }
